@@ -49,7 +49,7 @@ class TaxHelper
         $this->_taxRuleRepoFactory = $taxRuleRepoFactory;
     }
 
-    public function createProductTaxRateAndZone($data)
+    public function createTaxRate($data)
     {
         $country = $this->_countryFactory->create()->loadByCode($data['tax_country_code'],'iso2_code');
         $countryId = $country->getId();
@@ -87,9 +87,11 @@ class TaxHelper
         $rateRepo = $this->_taxRateRepoFactory->create();
         $rateRepo->save($rateModel);
 
+        return true;
+
     }
 
-    public function createProductTaxRule($data)
+    public function createTaxRule($data)
     {
         $modelData = [
             'code' => $data['code'],
@@ -98,7 +100,10 @@ class TaxHelper
             'calculate_subtotal' => $data['calculate_subtotal']
         ];
 
-        $ruleModel = $this->_taxRuleFactory->create()->loadByCode($modelData['code']);
+        $ruleModel = $this->_getTaxRuleByCode($modelData['code']);
+        if ($ruleModel === null) {
+            $ruleModel = $this->_taxRuleFactory->create();
+        }
         $ruleModel->setData($modelData);
 
         $taxRateIds = [];
@@ -117,8 +122,31 @@ class TaxHelper
         $ruleModel->setCustomerTaxClassIds($data['customer_tax_class_ids']);
 
         $ruleRepo = $this->_taxRuleRepoFactory->create();
-        $ruleRepo->save($ruleModel);
+        try {
+            $ruleRepo->save($ruleModel);
+        } catch (\Magento\Framework\Exception\AlreadyExistsException $e) {
+            return false;
+        }
 
+        return true;
+
+    }
+
+    protected function _getTaxRuleByCode($taxRuleCode)
+    {
+        $searchCriteriaBuilder = $this->_searchCriteriaBuilderFactory->create();
+        $searchCriteria = $searchCriteriaBuilder
+            ->addFilter('code',$taxRuleCode,'eq')
+            ->create();
+        $taxRules = $this->_taxRuleRepoFactory->create()
+            ->getList($searchCriteria)
+            ->getItems();
+
+        if (count($taxRules)) {
+            return reset($taxRules); // get first
+        } else {
+            return null;
+        }
     }
 
 }

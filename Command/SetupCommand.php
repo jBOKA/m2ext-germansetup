@@ -49,7 +49,7 @@ class SetupCommand extends AbstractCommand
         $this->configHelper->setDefaultCustomerTaxClassToRetailCustomer();
         $output->writeln('Setting: default customer tax class -> "Retail Customer"');
 
-        $this->taxHelper->createProductTaxRateAndZone([
+        $createTaxRateSuccess = $this->taxHelper->createTaxRate([
             'code' => 'DE19',
             'tax_country_code' => 'DE',
             'tax_region_id' => null,
@@ -60,9 +60,13 @@ class SetupCommand extends AbstractCommand
             'zip_to' => null,
             'title' => 'MwSt.'
         ]);
-        $output->writeln('Tax: created tax rate DE19');
+        if ($createTaxRateSuccess) {
+            $output->writeln('Tax: created tax rate DE19');
+        } else {
+            $output->writeln('<error>Tax: rate could not be created DE19</error>');
+        }
 
-        $this->taxHelper->createProductTaxRule([
+        $createTaxRuleSuccess = $this->taxHelper->createTaxRule([
             'code' => 'DE19',
             'priority' => 0,
             'position' => 0,
@@ -71,7 +75,12 @@ class SetupCommand extends AbstractCommand
             'product_tax_class_ids' => [2], // Taxable Goods, for constant see tax's InstallData
             'customer_tax_class_ids' => [3], // Retail Customer, for constant see tax's InstallData
         ]);
-        $output->writeln('Tax: created tax rule for rate DE19');
+        if ($createTaxRuleSuccess && false) {
+            $output->writeln('Tax: created tax rule for rate DE19');
+        } else {
+            $output->writeln('<error>Tax: rule could not be created DE19 - maybe it already exists</error>');
+        }
+
 
         $this->configHelper->setDefaultCountry('DE');
         $output->writeln('Setting: default country -> "DE"');
