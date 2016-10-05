@@ -10,9 +10,9 @@ class AbstractCommand extends Command
         State $state
     ) {
         try {
-           // if (!$state->getAreaCode()) {
+           if (!$state->getAreaCode()) {
                 $state->setAreaCode('adminhtml');
-           // }
+           }
         } catch (\Exception $e) {
             // just let it flow
         }
