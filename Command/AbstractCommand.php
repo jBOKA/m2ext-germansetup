@@ -6,20 +6,21 @@ use Symfony\Component\Console\Command\Command;
 class AbstractCommand extends Command
 {
 
+    protected $_state;
+
     public function __construct(
         State $state
     ) {
-        try {
-            $state->getAreaCode();
-        } catch (\Exception $e) {
-            $state->setAreaCode('adminhtml');
-        }
         parent::__construct();
     }
 
-    protected function configure()
+    protected function setAreaCode()
     {
-        parent::configure();
+        try {
+            $this->_state->getAreaCode();
+        } catch (\Exception $e) {
+            $this->_state->setAreaCode('adminhtml');
+        }
     }
-    
+
 }

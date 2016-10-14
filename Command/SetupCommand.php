@@ -35,6 +35,7 @@ class SetupCommand extends AbstractCommand
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
+        $this->setAreaCode();
         $this->registry->register('isSecureArea', true);
 
         $this->configHelper->setToSingleStoreMode();
