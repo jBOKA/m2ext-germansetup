@@ -2,6 +2,7 @@
 
 use Magento\Framework\App\State;
 use Symfony\Component\Console\Command\Command;
+use Magento\Backend\App\Area\FrontNameResolver\FrontNameResolver;
 
 class AbstractCommand extends Command
 {
@@ -20,6 +21,7 @@ class AbstractCommand extends Command
         try {
             $this->_appState->getAreaCode();
         } catch (\Exception $e) {
+            $adminAreaCode = FrontNameResolver::AREA_CODE;
             $this->_appState->setAreaCode('adminhtml');
         }
     }
