@@ -2,7 +2,7 @@
 
 use Magento\Framework\App\State;
 use Symfony\Component\Console\Command\Command;
-use Magento\Backend\App\Area\FrontNameResolver\FrontNameResolver;
+use Magento\Backend\App\Area\FrontNameResolver;
 
 class AbstractCommand extends Command
 {
