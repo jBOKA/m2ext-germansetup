@@ -1,11 +1,7 @@
 <?php namespace Ohjunge\GermanSetup\Command;
 
-use Magento\Framework\App\State;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use Magento\Framework\Registry;
-use Ohjunge\GermanSetup\Helper\ConfigHelperFactory;
-use Ohjunge\GermanSetup\Helper\TaxHelperFactory;
 
 class SetupCommand extends AbstractCommand
 {
@@ -13,16 +9,19 @@ class SetupCommand extends AbstractCommand
     protected $registry;
     protected $configHelper;
     protected $taxHelper;
+    protected $regionHelper;
 
     public function __construct(
-        ConfigHelperFactory $configHelperFactory,
-        TaxHelperFactory $taxHelperFactory,
-        State $state,
-        Registry $registry
+        \Ohjunge\GermanSetup\Helper\ConfigHelperFactory $configHelperFactory,
+        \Ohjunge\GermanSetup\Helper\TaxHelperFactory $taxHelperFactory,
+        \Magento\Framework\App\State $state,
+        \Magento\Framework\Registry $registry,
+        \Ohjunge\GermanSetup\Helper\RegionHelper $regionHelper
     ) {
         $this->registry = $registry;
         $this->configHelper = $configHelperFactory->create();
         $this->taxHelper = $taxHelperFactory->create();
+        $this->regionHelper = $regionHelper;
         parent::__construct($state);
     }
 
@@ -90,14 +89,17 @@ class SetupCommand extends AbstractCommand
         $this->configHelper->setAllowedCountries(['DE']);
         $output->writeln('Setting: allowed countries -> "DE"');
 
-        $this->configHelper->setOptionalZipCountries(['DE']);
-        $output->writeln('Setting: optional-zip countries -> "DE"');
+        $this->configHelper->setOptionalZipCountries('');
+        $output->writeln('Setting: optional-zip countries -> magento default');
 
-        $this->configHelper->setEuCountries(['DE']);
-        $output->writeln('Setting: EU countries -> "DE"');
+        $this->configHelper->setEuCountries('');
+        $output->writeln('Setting: EU countries -> magento default');
 
         $this->configHelper->setTopDestinations(['DE']);
         $output->writeln('Setting: EU countries -> "DE"');
+
+        $this->configHelper->setCountriesWithStateRequired('');
+        $output->writeln('Setting: country ids with state required -> magento default');
 
         $this->configHelper->setAllowToChooseStateIfOptionalDisabled();
         $output->writeln('Setting: allow to choose state if optional for country -> "no"');
@@ -141,9 +143,18 @@ class SetupCommand extends AbstractCommand
         $this->configHelper->setCrossBorderTradeDisabled();
         $output->writeln('Setting: border trade enabled -> "no"');
 
-        $this->configHelper->setDefaultTaxDestinationCalculationCountry('DE');
-        $output->writeln('Setting: default tax destination calculation country -> "DE"');
-        $output->writeln('<comment>Please check for region and postcode setting manually</comment>');
+        $countryId = $this->getQuestion($input, $output, 'Please give country id for default tax destination calculation (empty for "DE"):', 'DE');
+        $this->configHelper->setDefaultTaxDestinationCalculationCountry($countryId);
+        $output->writeln('Setting: default tax destination calculation country -> "'.$countryId.'"');
+
+        $regionNames = $this->regionHelper->getNamesByCountryId($countryId);
+        $regionName = $this->getChoice($input, $output, 'Please choose region for default tax destination calculation:', $regionNames);
+        $this->configHelper->setDefaultTaxDestinationCalculationRegion($regionName, $countryId);
+        $output->writeln('Setting: default tax destination calculation region -> "'.$regionName.'" / "'.$countryId.'"');
+
+        $postcode = $this->getQuestion($input, $output, 'Please give postcode for default tax destination calculation (empty for "10115"):', '10115');
+        $this->configHelper->setDefaultTaxDestinationCalculationPostcode($postcode);
+        $output->writeln('Setting: default tax destination calculation country -> "'.$postcode.'"');
 
         $this->configHelper->setDisplayProductPricesInCatalogIncludingTax();
         $output->writeln('Setting: display product prices in catalog -> "including tax"');
@@ -192,12 +203,55 @@ class SetupCommand extends AbstractCommand
 
         $this->configHelper->setCurrencyDefaultToEuro();
         $output->writeln('Setting: general currency default -> "EUR"');
-        
+
         $this->configHelper->setCurrencyAllowedToEuro();
         $output->writeln('Setting: general currency allowed -> ["EUR"]');
+
+        $countryId = $this->getQuestion($input, $output, 'Please give country id for shipping origin (empty for "DE"):', 'DE');
+        $this->configHelper->setShippingOriginCountryId($countryId);
+        $output->writeln('Setting: shipping origin country ID -> "'.$countryId.'"');
+
+        $regionNames = $this->regionHelper->getNamesByCountryId($countryId);
+        $regionName = $this->getChoice($input, $output, 'Please choose Region for shipping origin:', $regionNames);
+        $this->configHelper->setShippingOriginRegion($regionName,$countryId);
+        $output->writeln('Setting: shipping origin region -> "'.$regionName.'" / "'.$countryId.'"');
+
+        $city = $this->getQuestion($input, $output, 'Please give country id for shipping origin (empty for "Berlin"):', 'Berlin');
+        $this->configHelper->setShippingOriginCity($city);
+        $output->writeln('Setting: shipping origin city -> "'.$city.'"');
+
+        $postcode = $this->getQuestion($input, $output, 'Please give postcode for shipping origin (empty for "10115"):', '10115');
+        $this->configHelper->setShippingOriginPostcode($postcode);
+        $output->writeln('Setting: shipping origin postcode -> "'.$postcode.'"');
+
 
         $output->writeln('<comment>Please set "Settings -> General -> General -> Store Information"</comment>');
 
     }
     
+    protected function getConfirmation($input, $output, $string, $default)
+    {
+        $helper = $this->getHelper('question');
+        $question = new \Symfony\Component\Console\Question\ConfirmationQuestion($string, $default);
+
+        return $helper->ask($input, $output, $question);
+    }
+    
+    protected function getQuestion($input, $output, $string, $default)
+    {
+        $helper = $this->getHelper('question');
+        $question = new \Symfony\Component\Console\Question\Question($string, $default);
+
+        return $helper->ask($input, $output, $question);
+    }
+    
+    protected function getChoice($input, $output, $string, $choices)
+    {
+        $helper = $this->getHelper('question');
+        $question = new \Symfony\Component\Console\Question\ChoiceQuestion($string, $choices, '0');
+
+        return $helper->ask($input, $output, $question);
+    }
+    
+
 }

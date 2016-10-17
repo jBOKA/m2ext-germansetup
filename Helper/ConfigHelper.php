@@ -8,21 +8,21 @@
 
 namespace Ohjunge\GermanSetup\Helper;
 
-use Magento\Framework\App\Config\Storage\WriterInterface;
-use Magento\Framework\App\CacheInterface;
-
 class ConfigHelper
 {
 
     protected $configWriter;
     protected $cacheManager;
+    protected $regionHelper;
 
     public function __construct(
-        WriterInterface $configWriter,
-        CacheInterface $cacheManager
+        \Magento\Framework\App\Config\Storage\WriterInterface $configWriter,
+        \Magento\Framework\App\CacheInterface $cacheManager,
+        \Ohjunge\GermanSetup\Helper\RegionHelper $regionHelper
     ) {
         $this->configWriter = $configWriter;
         $this->cacheManager = $cacheManager;
+        $this->regionHelper = $regionHelper;
     }
 
     public function setDefaultCountry($countryCode)
@@ -41,13 +41,22 @@ class ConfigHelper
     {
         $xmlPath = \Magento\Directory\Helper\Data::OPTIONAL_ZIP_COUNTRIES_CONFIG_PATH;
         $configStr = is_array($countryCodes) ? implode(',',$countryCodes) : $countryCodes;
-        $this->configWriter->save($xmlPath,$configStr);
+        if ($configStr === '') {
+            $this->configWriter->delete($xmlPath);
+        } else {
+            $this->configWriter->save($xmlPath,$configStr);
+        }
     }
 
     public function setEuCountries($countryCodes)
     {
         $configStr = is_array($countryCodes) ? implode(',',$countryCodes) : $countryCodes;
-        $this->configWriter->save('general/country/eu_countries',$configStr);
+        if ($configStr === '') {
+            // magento default
+            $this->configWriter->delete('general/country/eu_countries');
+        } else {
+            $this->configWriter->save('general/country/eu_countries',$configStr);
+        }
     }
 
     public function setTopDestinations($countryCodes)
@@ -55,6 +64,18 @@ class ConfigHelper
         $xmlPath = \Magento\Directory\Helper\Data::XML_PATH_TOP_COUNTRIES;
         $configStr = is_array($countryCodes) ? implode(',',$countryCodes) : $countryCodes;
         $this->configWriter->save($xmlPath,$configStr);
+    }
+
+    public function setCountriesWithStateRequired($countryCodes)
+    {
+        $xmlPath = \Magento\Directory\Helper\Data::XML_PATH_STATES_REQUIRED;
+        $configStr = is_array($countryCodes) ? implode(',',$countryCodes) : $countryCodes;
+        if ($configStr === '') {
+            // magento default, delete not allowed
+            $this->configWriter->save($xmlPath,'AT,BR,CA,EE,FI,LV,LT,RO,ES,CH,US');
+        } else {
+            $this->configWriter->save($xmlPath,$configStr);
+        }
     }
 
     public function setAllowToChooseStateIfOptionalEnabled()
@@ -261,13 +282,23 @@ class ConfigHelper
         $this->configWriter->save($xml_path,0);
     }
 
-    public function setDefaultTaxDestinationCalculationCountry($countryCode)
+    public function setDefaultTaxDestinationCalculationCountry($countryId)
     {
         $xml_path = \Magento\Tax\Model\Config::CONFIG_XML_PATH_DEFAULT_COUNTRY;
-        $this->configWriter->save($xml_path,$countryCode);
-        // maybe add region and postcode later on
-        // region: CONFIG_XML_PATH_DEFAULT_REGION
-        // postcode: CONFIG_XML_PATH_DEFAULT_POSTCODE
+        $this->configWriter->save($xml_path,$countryId);
+    }
+
+    public function setDefaultTaxDestinationCalculationRegion($regionName, $countryId)
+    {
+        $xml_path = \Magento\Tax\Model\Config::CONFIG_XML_PATH_DEFAULT_REGION;
+        $regionId = $this->regionHelper->getIdByName($regionName, $countryId);
+        $this->configWriter->save($xml_path,$regionId);
+    }
+
+    public function setDefaultTaxDestinationCalculationPostcode($postcode)
+    {
+        $xml_path = \Magento\Tax\Model\Config::CONFIG_XML_PATH_DEFAULT_POSTCODE;
+        $this->configWriter->save($xml_path,$postcode);
     }
 
     public function setDisplayProductPricesInCatalogIncludingTax()
@@ -600,5 +631,30 @@ class ConfigHelper
         $this->configWriter->save($xml_path,'EUR');
     }
 
+    public function setShippingOriginCountryId($countryId)
+    {
+        $xml_path = \Magento\Shipping\Model\Config::XML_PATH_ORIGIN_COUNTRY_ID;
+        $this->configWriter->save($xml_path,$countryId);
+    }
+    
+    public function setShippingOriginRegion($regionName, $countryId)
+    {
+        $xml_path = \Magento\Shipping\Model\Config::XML_PATH_ORIGIN_REGION_ID;
+        $regionId = $this->regionHelper->getIdByName($regionName, $countryId);
+        $this->configWriter->save($xml_path,$regionId);
+    }
+    
+    public function setShippingOriginCity($city)
+    {
+        $xml_path = \Magento\Shipping\Model\Config::XML_PATH_ORIGIN_CITY;
+        $this->configWriter->save($xml_path,$city);
+    }
+    
+    public function setShippingOriginPostcode($postcode)
+    {
+        $xml_path = \Magento\Shipping\Model\Config::XML_PATH_ORIGIN_POSTCODE;
+        $this->configWriter->save($xml_path,$postcode);
+    }
+    
 
 }
