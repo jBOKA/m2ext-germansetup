@@ -36,6 +36,7 @@ class SetupCommand extends AbstractCommand
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $this->setAreaCode();
+
         $this->registry->register('isSecureArea', true);
 
         $this->configHelper->setToSingleStoreMode();
@@ -185,6 +186,15 @@ class SetupCommand extends AbstractCommand
 
         $this->configHelper->setSalesDisplayZeroTaxSubtotalDisabled();
         $output->writeln('Setting: sales display zero tax subtotal -> "no"');
+
+        $this->configHelper->setCurrencyBaseToEuro();
+        $output->writeln('Setting: general currency base -> "EUR"');
+
+        $this->configHelper->setCurrencyDefaultToEuro();
+        $output->writeln('Setting: general currency default -> "EUR"');
+        
+        $this->configHelper->setCurrencyAllowedToEuro();
+        $output->writeln('Setting: general currency allowed -> ["EUR"]');
 
         $output->writeln('<comment>Please set "Settings -> General -> General -> Store Information"</comment>');
 

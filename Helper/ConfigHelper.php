@@ -582,5 +582,23 @@ class ConfigHelper
         $this->configWriter->save($xml_path,0);
     }
 
+    public function setCurrencyBaseToEuro()
+    {
+        $xml_path = \Magento\Directory\Model\Currency::XML_PATH_CURRENCY_BASE;
+        $this->configWriter->save($xml_path,'EUR');
+    }
+
+    public function setCurrencyDefaultToEuro()
+    {
+        $xml_path = \Magento\Directory\Model\Currency::XML_PATH_CURRENCY_DEFAULT;
+        $this->configWriter->save($xml_path,'EUR');
+    }
+
+    public function setCurrencyAllowedToEuro()
+    {
+        $xml_path = \Magento\Directory\Model\Currency::XML_PATH_CURRENCY_ALLOW;
+        $this->configWriter->save($xml_path,'EUR');
+    }
+
 
 }
