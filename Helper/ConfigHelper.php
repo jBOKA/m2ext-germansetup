@@ -656,5 +656,18 @@ class ConfigHelper
         $this->configWriter->save($xml_path,$postcode);
     }
     
+    public function setWishlistEnabled()
+    {
+        $xml_path = 'wishlist/general/active';
+        $this->configWriter->save($xml_path,1);
+    }
+
+    public function setWishlistDisabled()
+    {
+        $xml_path = 'wishlist/general/active';
+        $this->configWriter->save($xml_path,0);
+    }
+
+
 
 }

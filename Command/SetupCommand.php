@@ -224,6 +224,8 @@ class SetupCommand extends AbstractCommand
         $this->configHelper->setShippingOriginPostcode($postcode);
         $output->writeln('Setting: shipping origin postcode -> "'.$postcode.'"');
 
+        $this->configHelper->setWishlistDisabled();
+        $output->writeln('Setting: wishlist enabled -> "no"');
 
         $output->writeln('<comment>Please set "Settings -> General -> General -> Store Information"</comment>');
 
